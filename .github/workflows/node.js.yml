@@ -10,12 +10,17 @@ on:
     branches: [ main ]
 
 jobs:
+  get_source:
+    - uses: actions/checkout@v2
+      with:
+        context: .
+        outputs: type=oci,dest=/composer/node/file-service
+
   build:
+    needs: get_source
     runs-on: ubuntu-latest
     container: docker://abcdesktopio/oc.user.18.04:dev
     steps:
-      - uses: actions/checkout@v2
-
       - name: Run in oc.user container
         run: |
           pwd
