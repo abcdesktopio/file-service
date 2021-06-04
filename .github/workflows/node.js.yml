@@ -11,13 +11,10 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    container: docker://abcdesktopio/oc.user.18.04:dev
     steps:
-    - uses: docker://abcdesktopio/oc.user.18.04:dev
-      with:
-        command: |
+      - name: Run in oc.user container
+        run: |
           pwd
           ls -la
-
