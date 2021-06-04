@@ -11,10 +11,13 @@ on:
 
 jobs:
   get_source:
-    - uses: actions/checkout@v2
-      with:
-        context: .
-        outputs: type=oci,dest=/composer/node/file-service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v2
+        with:
+          context: .
+          outputs: type=oci,dest=/composer/node/file-service
 
   build:
     needs: get_source
