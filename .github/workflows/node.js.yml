@@ -25,7 +25,9 @@ jobs:
   build:
     needs: get_source
     runs-on: ubuntu-latest
-    container: docker://abcdesktopio/oc.user.18.04:dev
+    container: 
+      image: docker://abcdesktopio/oc.user.18.04:dev
+      options: --user 0    
     steps:
       - name: Download source code
         uses: actions/download-artifact@v1
@@ -36,4 +38,12 @@ jobs:
         run: |
           pwd
           ls -la
-          ls -ls /
+          ls -la /
+          ls -la file-service
+          rm -rf /composer/node/file-service
+          cp -r file-service /composer/node
+          cd /composer/node/file-service
+          supervisorctl stop file-service
+          yarn install
+          supervisorctl start file-service
+          yarn test
