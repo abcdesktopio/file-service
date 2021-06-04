@@ -15,15 +15,23 @@ jobs:
     steps:
       - name: Get source code
         uses: actions/checkout@v2
+
+      - name: Upload source code as artefact
+        uses: actions/upload-artifact@v1
         with:
-          context: .
-          outputs: type=oci,dest=/composer/node/file-service
+          name: file-service
+          path: .
 
   build:
     needs: get_source
     runs-on: ubuntu-latest
     container: docker://abcdesktopio/oc.user.18.04:dev
     steps:
+      - name: Download source code
+        uses: actions/download-artifact@v1
+        with:
+          name: file-service
+
       - name: Run in oc.user container
         run: |
           pwd
