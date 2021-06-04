@@ -16,9 +16,8 @@ jobs:
 
     steps:
     - uses: docker://abcdesktopio/oc.user.18.04:dev
-    - name: Use Node.js 14.15
-      uses: actions/setup-node@v2
       with:
-        node-version: 14.15
-    - run: ls -la
-    - run: yarn test
+        command: |
+          pwd
+          ls -la
+
