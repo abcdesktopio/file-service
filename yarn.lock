@@ -4114,6 +4114,13 @@ object.values@^1.1.1:
     function-bind "^1.1.1"
     has "^1.0.3"
 
+oc.user.libraries@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/oc.user.libraries/-/oc.user.libraries-1.0.1.tgz#5f5ffa45fdfbe508bf8894fd38a99f8df22d25be"
+  integrity sha512-Zqo9nt3Fb4dL8AWkDKL7YHLNqAngKdhUGGMcdFL67uh3rPUty8ClGFkPEkfIrway26S/RKZDGYWDpofUj+7QQw==
+  dependencies:
+    express-validator "^6.6.0"
+
 on-finished@^2.3.0, on-finished@~2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/on-finished/-/on-finished-2.3.0.tgz#20f1336481b083cd75337992a16971aa2d906947"

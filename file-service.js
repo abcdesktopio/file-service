@@ -23,9 +23,7 @@ const JSZip = require('jszip');
 
 const { pipeline } = require('stream');
 
-const {
-  listenDaemonOnContainerIpAddr,
-} = require('/composer/node/common-libraries/index.js');
+const { listenDaemonOnContainerIpAddr } = require('oc.user.libraries');
 
 const {
   middleWareFileQuery,

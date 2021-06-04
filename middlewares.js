@@ -12,7 +12,7 @@
 */
 
 const { body, query } = require('express-validator');
-const { getFinalMiddlewares } = require('../common-libraries/middlewares');
+const { getFinalMiddlewares } = require('oc.user.libraries/middlewares');
 
 const middleWareFileQuery = query('file')
   .exists({ checkNull: true })
