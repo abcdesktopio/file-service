@@ -36,14 +36,9 @@ jobs:
 
       - name: Run in oc.user container
         run: |
-          pwd
-          ls -la
-          ls -la /
-          ls -la file-service
           rm -rf /composer/node/file-service
           cp -r file-service /composer/node
           cd /composer/node/file-service
-          supervisorctl stop file-service
           yarn install
-          supervisorctl start file-service
-          yarn test
+          supervisorctl restart file-service
+          CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
