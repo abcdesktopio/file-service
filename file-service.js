@@ -42,6 +42,7 @@ const exists = util.promisify(fs.exists);
 const rootdir = '/home/balloon';
 const PORT = process.env.FILE_SERVICE_TCP_PORT || 29783;
 
+console.log(`Service is listening on port ${PORT}`);
 console.log(`Root dir is ${rootdir}`);
 
 function checkSafePath(currentPath) {
