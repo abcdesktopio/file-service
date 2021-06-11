@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: docker://abcdesktopio/oc.user.18.04:dev
-      options: --user 0    
+      options: --user 0
     steps:
       - name: Download source code
         uses: actions/download-artifact@v1
@@ -40,5 +40,4 @@ jobs:
           yarn install
           nohup yarn start &
           sleep 10
-          netstat -anp
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
