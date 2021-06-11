@@ -38,8 +38,7 @@ jobs:
           cp -r file-service /composer/node
           cd /composer/node/file-service
           yarn install
-          supervisorctl restart file-service
-          ls -la /home/balloon
+          nohup yarn start &
           sleep 10
           netstat -anp
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
