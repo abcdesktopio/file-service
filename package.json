@@ -8,7 +8,8 @@
   "scripts": {
     "test": "jest --bail",
     "swagger-spec": "swagger-jsdoc -d swaggerDef.js -o swaggerSpec.json",
-    "docs": "npm run swagger-spec && widdershins -c swaggerSpec.json -o file-service.md"
+    "docs": "npm run swagger-spec && widdershins -c swaggerSpec.json -o file-service.md",
+    "start": "node file-service.js"
   },
   "dependencies": {
     "express": "^4.17.1",
