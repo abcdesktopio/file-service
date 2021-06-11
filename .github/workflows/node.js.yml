@@ -42,5 +42,6 @@ jobs:
           yarn install
           supervisorctl restart file-service
           ls -la /home/balloon
-          sleep 5
+          sleep 10
+          netstat -anp
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
