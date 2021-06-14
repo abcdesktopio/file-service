@@ -41,3 +41,10 @@ jobs:
           nohup yarn start &
           sleep 10
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
+
+      - name: Dispatch repository oc.user
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.TOKEN_DISPATCH }}
+          repository: abcdesktopio/oc.user
+          event-type: dispatch-from-file-service
