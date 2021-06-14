@@ -42,20 +42,20 @@ jobs:
           sleep 10
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
 
-    dispatch:
-      needs: get_source
-      runs-on: ubuntu-latest
-      steps:
-        - name: Dispatch repository oc.user
-          uses: peter-evans/repository-dispatch@v1
-          with:
-            token: ${{ secrets.TOKEN_DISPATCH }}
-            repository: abcdesktopio/oc.user
-            event-type: dispatch-from-file-service
+  dispatch:
+    needs: get_source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch repository oc.user
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.TOKEN_DISPATCH }}
+          repository: abcdesktopio/oc.user
+          event-type: dispatch-from-file-service
 
-        - name: Dispatch repository oc.cupsd
-          uses: peter-evans/repository-dispatch@v1
-          with:
-            token: ${{ secrets.TOKEN_DISPATCH }}
-            repository: abcdesktopio/oc.cupsd
-            event-type: dispatch-from-file-service
+      - name: Dispatch repository oc.cupsd
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.TOKEN_DISPATCH }}
+          repository: abcdesktopio/oc.cupsd
+          event-type: dispatch-from-file-service
