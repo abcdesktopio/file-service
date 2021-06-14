@@ -43,7 +43,7 @@ jobs:
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
 
   dispatch:
-    needs: get_source
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch repository oc.user
