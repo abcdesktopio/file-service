@@ -414,7 +414,7 @@ app.use((err, req, res, _) => {
   res.status(500).send({ code: 500, data: 'Internal server error' });
 });
 
-app.use('/filer', router);
+app.use(/\/(printer)?filer/, router);
 
 process.on('uncaughtException', (err) => {
   console.error(err.stack);
