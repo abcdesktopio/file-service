@@ -227,18 +227,21 @@ router.get('/directory/list',
   middleWareDirectoryQuery,
   asyncHandler(async (req, res) => {
     const { directory } = req.query;
-    console.log('listing directory:', directory);
 
     // Check if the path is correct
     if (!checkSafePath(directory)) {
+      console.log('Error on path:', directory);
       res.status(400).send({ code: 400, data: 'Path Server Error' });
     } else if (!(await exists(directory))) {
+      console.log('Can not find file:', directory);
       res.status(404).send({ code: 404, data: 'Not found' });
     } else {
       const ls = await fs.promises.lstat(directory);
       if (ls.isDirectory()) {
+        console.log('listing directory:', directory);
         res.status(200).send(await getFilesSort(directory));
       } else {
+        console.log(directory, 'is not a directory');
         res.status(403).send({ code: 403, data: `${directory} is not a directory` });
       }
     }
