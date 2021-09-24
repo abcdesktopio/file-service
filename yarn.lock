@@ -1860,7 +1860,7 @@ eslint@^7.11.0:
     esutils "^2.0.2"
     file-entry-cache "^5.0.1"
     functional-red-black-tree "^1.0.1"
-    glob-parent "^5.0.0"
+    glob-parent "^5.1.0"
     globals "^12.1.0"
     ignore "^4.0.6"
     import-fresh "^3.0.0"
