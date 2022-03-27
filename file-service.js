@@ -12,12 +12,12 @@
 */
 
 const fs = require('fs');
+const fsextra = require('fs-extra')
 const util = require('util');
 const express = require('express');
 const asyncHandler = require('express-async-handler');
 const helmet = require('helmet');
 const path = require('path');
-const mkdirp = require('mkdirp');
 const multer = require('multer');
 const JSZip = require('jszip');
 
@@ -300,7 +300,7 @@ router.post('/', [upload.single('file'), middlewareCheckFile],
     if (checkSafePath(saveTo)) {
       if (fullPath !== '' && !(await dirExists(fullPath))) {
         console.log(`Create dir${fullPath}`);
-        await mkdirp(fullPath);
+        fsextra.ensureDir(fullPath);
       }
 
       console.log(originalname, 'want to be save in', saveTo);
