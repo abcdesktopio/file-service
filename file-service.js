@@ -36,10 +36,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const exists = util.promisify(fs.exists);
 
-// trust no one
-// Hard code the home dir
-// DO NOT CHANGE THIS FOR SECURITY
-const rootdir = '/home/balloon';
+const rootdir = process.env.HOME;
 const PORT = process.env.FILE_SERVICE_TCP_PORT || 29783;
 
 console.log(`Service is listening on port ${PORT}`);
