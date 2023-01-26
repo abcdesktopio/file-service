@@ -44,7 +44,13 @@ console.log(`Root dir is ${rootdir}`);
 
 function checkSafePath(currentPath) {
   let bReturn = false;
+  connsole.log('currentPath=' + currentPath);
   try {
+    if (currentPath.length >= 2 ) {
+    	if (currentPath[0] == '~' && currentPath[1] == '/') {
+		currentPath = rootdir + '/' + currentPath.substring(2);
+    	}
+    }
     const normalizedPath = path.normalize(currentPath);
     const pathObj = path.parse(normalizedPath);
     if (pathObj.dir.startsWith(rootdir) || currentPath === rootdir) {
