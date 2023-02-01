@@ -21,6 +21,7 @@ const uploadFinaleNameTwo = 'uploaded.data.2.txt';
 const pathOnHost = `/home/balloon/.wallpapers/${uploadFinaleName}`;
 describe('Test file-service', () => {
   beforeAll(() => {
+    fs.mkdirSync('/home/balloon/.wallpapers', { recursive: true } );
     fs.writeFileSync('/tmp/uploaded.txt', 'Yet another test file');
     fs.writeFileSync('/tmp/uploaded.2.txt', 'Yet another test file');
   });
