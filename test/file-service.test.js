@@ -40,7 +40,7 @@ describe('Test file-service', () => {
       const expected = { code: 200, data: 'ok' };
       return request
         .post('/filer')
-        .field('fullPath', '/home/balloon/.wallpapers')
+        .field('fullPath', '~/.wallpapers')
         .attach('file', fs.readFileSync('/tmp/uploaded.txt'), uploadFinaleName)
         .expect(200)
         .expect(expected);
@@ -101,7 +101,7 @@ describe('Test file-service', () => {
   describe('Test list directory', () => {
     it('Should list all files in wallpapers directory', () => request
       .get('/filer/directory/list')
-      .query({ directory: '/home/balloon/.wallpapers' })
+      .query({ directory: '~/.wallpapers' })
       .expect(200));
 
     it('Should get not found', () => request
@@ -112,7 +112,7 @@ describe('Test file-service', () => {
 
     it('Should get forbiden because of file provided is not a directory', () => {
       const [file] = fs.readdirSync('/home/balloon/.wallpapers');
-      const directory = `/home/balloon/.wallpapers/${file}`;
+      const directory = `~/.wallpapers/${file}`;
       const expected = { code: 403, data: `${directory} is not a directory` };
       return request
         .get('/filer/directory/list')
