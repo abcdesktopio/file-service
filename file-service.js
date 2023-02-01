@@ -42,22 +42,37 @@ const PORT = process.env.FILE_SERVICE_TCP_PORT || 29783;
 console.log(`Service is listening on port ${PORT}`);
 console.log(`Root dir is ${rootdir}`);
 
+
+function normalize_tildpath(currentPath) {
+  let normalizedPath=currentPath;
+  console.log('normalize_directory currentPath=' + currentPath);
+  try {
+    if (currentPath.charAt(0) == '~')
+          currentPath = rootdir + '/' + currentPath.substring(1);
+    normalizedPath = path.normalize(currentPath);
+  } catch (e) {
+        console.error(e);
+  }
+  return normalizedPath;
+}
+ 
+
+
 function checkSafePath(currentPath) {
   let bReturn = false;
-  connsole.log('currentPath=' + currentPath);
+  console.log('checkSafePath currentPath=' + currentPath);
   try {
-    if (currentPath.length >= 2 ) {
-    	if (currentPath[0] == '~' && currentPath[1] == '/') {
-		currentPath = rootdir + '/' + currentPath.substring(2);
-    	}
-    }
+    if (currentPath.charAt(0) == '~')
+	  currentPath = rootdir + '/' + currentPath.substring(1);
     const normalizedPath = path.normalize(currentPath);
+    console.log('checkSafePath normalizedPath=', normalizedPath);
     const pathObj = path.parse(normalizedPath);
+    console.log('checkSafePath pathObj=', pathObj);
     if (pathObj.dir.startsWith(rootdir) || currentPath === rootdir) {
       bReturn = true;
     }
   } catch (e) {
-    console.error(e);
+    	console.error(e);
   }
   console.log(`checkSafePath return ${bReturn}`);
   return bReturn;
@@ -160,13 +175,15 @@ app.use((req, _, next) => {
 router.get('/',
   middleWareFileQuery,
   asyncHandler(async (req, res) => {
-    const { file } = req.query;
+    let { file } = req.query;
     console.log('file', file);
     if (!checkSafePath(file)) {
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
     }
 
+
+    file = normalize_tildpath(file);
     if (!(await exists(file))) {
       res.status(404).send({ code: 404, data: 'Not found' });
       return;
@@ -229,14 +246,18 @@ router.get('/',
 router.get('/directory/list',
   middleWareDirectoryQuery,
   asyncHandler(async (req, res) => {
-    const { directory } = req.query;
+    let { directory } = req.query;
 
     // Check if the path is correct
     if (!checkSafePath(directory)) {
       console.log('Error on path:', directory);
       res.status(400).send({ code: 400, data: 'Path Server Error' });
-    } else if (!(await exists(directory))) {
-      console.log('Can not find file:', directory);
+    }
+
+    directory = normalize_tildpath(directory);
+    console.log('normalized directory:', directory);
+    if (!(await exists(directory))) {
+      console.log('Can not find directory:', directory);
       res.status(404).send({ code: 404, data: 'Not found' });
     } else {
       const ls = await fs.promises.lstat(directory);
@@ -294,12 +315,14 @@ router.get('/directory/list',
  */
 router.post('/', [upload.single('file'), middlewareCheckFile],
   asyncHandler(async (req, res) => {
+    console.log( req );
     const { file } = req;
     const { fullPath = '' } = req.body;
     const { originalname, buffer } = file;
     const ret = { code: 403, data: 'Forbiden bad path' };
 
-    const saveTo = `${fullPath || rootdir}/${originalname}`;
+    let saveTo = `${fullPath || rootdir}/${originalname}`;
+    saveTo = normalize_tildpath(saveTo);	
     if (checkSafePath(saveTo)) {
       if (fullPath !== '' && !(await dirExists(fullPath))) {
         console.log(`Create dir${fullPath}`);
@@ -382,13 +405,14 @@ router.post('/', [upload.single('file'), middlewareCheckFile],
 router.delete('/',
   middleWareFileBody,
   asyncHandler(async (req, res) => {
-    const { file } = req.body;
+    let { file } = req.body;
     const ret = { code: 400, data: 'Path server error' };
     console.log('file', file);
     console.log(`accessing file: ${file}`);
 
     // Check if the path is correct
     if (checkSafePath(file)) {
+      file = normalize_tildpath(file);
       if (await exists(file)) {
         await fs.promises.unlink(file);
         ret.code = 200;
@@ -398,7 +422,6 @@ router.delete('/',
         ret.data = 'Not Found';
       }
     }
-
     res.status(ret.code).send(ret);
   }));
 
