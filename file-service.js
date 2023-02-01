@@ -50,6 +50,11 @@ function normalize_tildpath(currentPath) {
     if (currentPath.charAt(0) == '~')
           currentPath = rootdir + '/' + currentPath.substring(1);
     normalizedPath = path.normalize(currentPath);
+    const pathObj = path.parse(normalizedPath);
+    if (!pathObj.dir.startsWith(rootdir)) {
+	    normalizedPath = rootdir + '/' + normalizedPath;
+	    normalizedPath = path.normalize(normalizedPath);
+    }
   } catch (e) {
         console.error(e);
   }
