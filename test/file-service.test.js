@@ -18,10 +18,10 @@ const request = supertest(`http://${process.env.CONTAINER_IP}:29783`);
 
 const uploadFinaleName = 'uploaded.data.txt';
 const uploadFinaleNameTwo = 'uploaded.data.2.txt';
-const pathOnHost = `/home/balloon/.wallpapers/${uploadFinaleName}`;
+const pathOnHost = `${process.env.HOME}/.wallpapers/${uploadFinaleName}`;
 describe('Test file-service', () => {
   beforeAll(() => {
-    fs.mkdirSync('/home/balloon/.wallpapers', { recursive: true } );
+    fs.mkdirSync( `${process.env.HOME}/.wallpapers`, { recursive: true } );
     fs.writeFileSync('/tmp/uploaded.txt', 'Yet another test file');
     fs.writeFileSync('/tmp/uploaded.2.txt', 'Yet another test file');
   });
