@@ -8,12 +8,11 @@ on:
     branches: [ main ]
 
 jobs:
-  get_source:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: Get source code
         uses: actions/checkout@v4
-
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
@@ -21,32 +20,21 @@ jobs:
       - run: npm install -g yarn
       - run: yarn install
       - run: mkdir -p ~/.wallpapers
-
       - name: start file server
         uses: JarvusInnovations/background-action@v1
         with:
           run: |
-            DISABLE_REMOTEIP_FILTERING=true yarn start &
-          # your step-level and job-level environment variables are available to your commands as-is
-          # npm install will count towards the wait-for timeout
-          # whenever possible, move unrelated scripts to a different step
-          # to background multiple processes: add & to the end of the command
-
+            DISABLE_REMOTEIP_FILTERING=true yarn start   
           wait-on: |
              tcp:localhost:29783
           # IMPORTANT: to use environment variables in wait-on, you must use this form: ${{ env.VAR }}
           # See wait-on section below for all resource types and prefixes
-
           tail: true # true = stderr,stdout
           # This will allow you to monitor the progress live
-
           log-output-resume: stderr
           # Eliminates previosuly output stderr log entries from post-run output
-
           wait-for: 5m
-
           log-output: stderr,stdout # same as true
-
           log-output-if: failure
           # failure = exit-early or timeout
 
@@ -54,41 +42,40 @@ jobs:
         run: |
           CONTAINER_IP=127.0.0.1 yarn test
        
-
       - name: Upload source code as artefact
         uses: actions/upload-artifact@v3
         with:
           name: file-service
           path: .
 
-  tests:
-    needs: get_source
-    runs-on: ubuntu-latest
-    container: 
-      image: docker://abcdesktopio/oc.user.default:3.1
-      options: --user 0
-    steps:
-      - name: Download source code
-        uses: actions/download-artifact@v3
-        with:
-          name: file-service
-          path: file-service
-      
-      - name: Display structure of downloaded files
-        run: ls -R
-        working-directory: file-service
-
-      - name: Run in oc.user container
-        run: |
-          cp -r file-service /composer/node
-          cd /composer/node/file-service
-          npm install -g yarn
-          yarn install
-          mkdir -p ~/.wallpapers
-          cp -r /composer/wallpapers/* ~/.wallpapers
-          nohup yarn start &
-          sleep 10
-          CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
+#  tests:
+#    needs: get_source
+#   runs-on: ubuntu-latest
+#    container: 
+#      image: docker://abcdesktopio/oc.user.default:3.1
+#      options: --user 0
+#    steps:
+#      - name: Download source code
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: file-service
+#          path: file-service
+#      
+#      - name: Display structure of downloaded files
+#        run: ls -R
+#        working-directory: file-service
+#
+#      - name: Run in oc.user container
+#        run: |
+#          cp -r file-service /composer/node
+#          cd /composer/node/file-service
+#          npm install -g yarn
+#          yarn install
+#          mkdir -p ~/.wallpapers
+#          cp -r /composer/wallpapers/* ~/.wallpapers
+#          nohup yarn start &
+#          sleep 10
+#          CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
 
   dispatch:
     needs: tests
