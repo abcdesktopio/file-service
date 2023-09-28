@@ -43,6 +43,8 @@ jobs:
           cd /composer/node/file-service
           npm install -g yarn
           yarn install
+          mkdir -p ~/.wallpapers
+          cp -r /composer/wallpapers/* ~/.wallpapers
           nohup yarn start &
           sleep 10
           CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
