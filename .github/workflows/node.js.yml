@@ -42,12 +42,12 @@ jobs:
         run: |
           CONTAINER_IP=127.0.0.1 yarn test
        
-      - name: Upload source code as artefact
-        uses: actions/upload-artifact@v3
-        with:
-          name: file-service
-          path: .
-
+#      - name: Upload source code as artefact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: file-service
+#          path: .
+#
 #  tests:
 #    needs: get_source
 #   runs-on: ubuntu-latest
