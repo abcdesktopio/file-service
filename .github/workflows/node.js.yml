@@ -19,13 +19,13 @@ jobs:
         with:
           node-version: '18.x'
       - run: npm install -g yarn
+      - run: yarn install
       - run: mkdir -p ~/.wallpapers
 
       - name: start file server
         uses: JarvusInnovations/background-action@v1
         with:
           run: |
-            yarn install
             DISABLE_REMOTEIP_FILTERING=true yarn start &
           # your step-level and job-level environment variables are available to your commands as-is
           # npm install will count towards the wait-for timeout
@@ -33,7 +33,7 @@ jobs:
           # to background multiple processes: add & to the end of the command
 
           wait-on: |
-            http://localhost:29783
+             tcp:localhost:29783
           # IMPORTANT: to use environment variables in wait-on, you must use this form: ${{ env.VAR }}
           # See wait-on section below for all resource types and prefixes
 
