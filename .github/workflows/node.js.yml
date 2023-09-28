@@ -34,7 +34,6 @@ jobs:
 
       - name: Run in oc.user container
         run: |
-          rm -rf /composer/node/file-service
           cp -r file-service /composer/node
           cd /composer/node/file-service
           npm install -g yarn
