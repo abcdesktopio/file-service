@@ -53,16 +53,15 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-
       - name: Dispatch repository oc.cupsd
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.TOKEN_DISPATCH }}
           repository: abcdesktopio/oc.cupsd
           event-type: dispatch-from-file-service
           
       - name: Dispatch repository oc.filer
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.TOKEN_DISPATCH }}
           repository: abcdesktopio/oc.filer
