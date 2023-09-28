@@ -51,7 +51,8 @@ jobs:
           # failure = exit-early or timeout
 
       - name: Tests that require the resources defined above to run
-        run: yarn test
+        run: |
+          CONTAINER_IP=127.0.0.1 yarn test
        
 
       - name: Upload source code as artefact
