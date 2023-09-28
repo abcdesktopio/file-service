@@ -106,12 +106,12 @@ describe('Test file-service', () => {
 
     it('Should get not found', () => request
       .get('/filer/directory/list')
-      .query({ directory: '/home/balloon/directoryWichDoesnotExist' })
+      .query({ directory: '~/directoryWichDoesnotExist' })
       .expect(404)
       .expect({ code: 404, data: 'Not found' }));
 
     it('Should get forbiden because of file provided is not a directory', () => {
-      const [file] = fs.readdirSync('/home/balloon/.wallpapers');
+      const [file] = fs.readdirSync('~/.wallpapers');
       const directory = `~/.wallpapers/${file}`;
       const expected = { code: 403, data: `${directory} is not a directory` };
       return request
