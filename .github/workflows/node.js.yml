@@ -31,6 +31,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: file-service
+          path: file-service
+      
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: file-service
 
       - name: Run in oc.user container
         run: |
