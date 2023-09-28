@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '18.x'
       - run: npm install -g yarn
-      - run: mkir -p ~/.wallpapers
+      - run: mkdir -p ~/.wallpapers
       - run: yarn install
       - run: DISABLE_REMOTEIP_FILTERING=true yarn test
 
