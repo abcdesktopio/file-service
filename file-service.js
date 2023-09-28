@@ -38,13 +38,12 @@ const exists = util.promisify(fs.exists);
 
 const rootdir = process.env.HOME;
 const PORT = process.env.FILE_SERVICE_TCP_PORT || 29783;
-const ALLOW_TO_SENDFILE = process.env.SENDFILE || true;
-const ALLOW_TO_ACCEPTFILE = process.env.ACCEPTFILE || true;
-const ALLOW_TO_LISTFILE = process.env.ACCEPTLISTFILE || true;
-const ALLOW_TO_DELETEFILE = process.env.ACCEPTDELETEFILE || true;
+const ALLOW_TO_SENDFILE = is_allow_var( process.env.SENDFILE) ;
+const ALLOW_TO_ACCEPTFILE = is_allow_var( process.env.ACCEPTFILE );
+const ALLOW_TO_LISTFILE = is_allow_var( process.env.ACCEPTLISTFILE );
+const ALLOW_TO_DELETEFILE = is_allow_var( process.env.ACCEPTDELETEFILE );
 
 const DENIED_REQUEST_FILE_RESPONSE = { code: 403, data: 'Forbidden' };
-
 
 
 console.log(`Service is listening on port ${PORT}`);
@@ -54,6 +53,16 @@ console.log(`ALLOW_TO_ACCEPTFILE=${ALLOW_TO_ACCEPTFILE}`);
 console.log(`ALLOW_TO_LISTFILE=${ALLOW_TO_LISTFILE}`);
 console.log(`ALLOW_TO_DELETEFILE=${ALLOW_TO_DELETEFILE}`);
 
+
+
+function is_allow_var( env_var, value ) {
+  if ( env_var ) {
+    const _env_var = env_var.toLowerCase(); 
+    if ( _env_var === '0' || _env_var === 'false' || _env_var === 'disable' || _env_var === 'disabled' )
+	  return false;
+  }
+  return true;
+}
 
 function normalize_tildpath(currentPath) {
   let normalizedPath=currentPath;
@@ -193,7 +202,7 @@ router.get('/',
   middleWareFileQuery,
   asyncHandler(async (req, res) => {
     let { file } = req.query;
-    console.log('file', file);
+    console.log('file=', file);
 
 
     if (!ALLOW_TO_SENDFILE) {
@@ -203,6 +212,7 @@ router.get('/',
     }
 
     if (!checkSafePath(file)) {
+      console.log( 'request is denied !checkSafePath' );
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
     }
