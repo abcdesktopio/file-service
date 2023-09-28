@@ -20,9 +20,7 @@ const helmet = require('helmet');
 const path = require('path');
 const multer = require('multer');
 const JSZip = require('jszip');
-
 const { pipeline } = require('stream');
-
 const { listenDaemonOnContainerIpAddr } = require('oc.user.libraries');
 
 const {
@@ -33,14 +31,28 @@ const {
 } = require('./middlewares');
 
 const upload = multer({ storage: multer.memoryStorage() });
-
 const exists = util.promisify(fs.exists);
+
+
+
 
 const rootdir = process.env.HOME;
 const PORT = process.env.FILE_SERVICE_TCP_PORT || 29783;
+const ALLOW_TO_SENDFILE = process.env.SENDFILE || true;
+const ALLOW_TO_ACCEPTFILE = process.env.ACCEPTFILE || true;
+const ALLOW_TO_LISTFILE = process.env.ACCEPTLISTFILE || true;
+const ALLOW_TO_DELETEFILE = process.env.ACCEPTDELETEFILE || true;
+
+const DENIED_REQUEST_FILE_RESPONSE = { code: 403, data: 'Forbidden' };
+
+
 
 console.log(`Service is listening on port ${PORT}`);
 console.log(`Root dir is ${rootdir}`);
+console.log(`ALLOW_TO_SENDFILE=${ALLOW_TO_SENDFILE}`);
+console.log(`ALLOW_TO_ACCEPTFILE=${ALLOW_TO_ACCEPTFILE}`);
+console.log(`ALLOW_TO_LISTFILE=${ALLOW_TO_LISTFILE}`);
+console.log(`ALLOW_TO_DELETEFILE=${ALLOW_TO_DELETEFILE}`);
 
 
 function normalize_tildpath(currentPath) {
@@ -182,6 +194,14 @@ router.get('/',
   asyncHandler(async (req, res) => {
     let { file } = req.query;
     console.log('file', file);
+
+
+    if (!ALLOW_TO_SENDFILE) {
+      console.log( 'request is denied by configuration' );
+      res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
+      return;
+    }
+
     if (!checkSafePath(file)) {
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
@@ -252,6 +272,12 @@ router.get('/directory/list',
   middleWareDirectoryQuery,
   asyncHandler(async (req, res) => {
     let { directory } = req.query;
+
+    if (!ALLOW_TO_LISTFILE) {
+      console.log( 'request is denied by configuration' );
+      res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
+      return;
+    }
 
     // Check if the path is correct
     if (!checkSafePath(directory)) {
@@ -325,6 +351,12 @@ router.post('/', [upload.single('file'), middlewareCheckFile],
     const { fullPath = '' } = req.body;
     const { originalname, buffer } = file;
     const ret = { code: 403, data: 'Forbiden bad path' };
+
+    if (!ALLOW_TO_ACCEPTFILE) {
+      console.log( 'request is denied by configuration' );
+      res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
+      return;
+    }
 
     let saveTo = `${fullPath || rootdir}/${originalname}`;
     saveTo = normalize_tildpath(saveTo);	
@@ -414,6 +446,13 @@ router.delete('/',
     const ret = { code: 400, data: 'Path server error' };
     console.log('file', file);
     console.log(`accessing file: ${file}`);
+
+    if (!ALLOW_TO_DELETEFILE) {
+      console.log( 'request is denied by configuration' ); 
+      res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
+      return;
+    }
+
 
     // Check if the path is correct
     if (checkSafePath(file)) {
