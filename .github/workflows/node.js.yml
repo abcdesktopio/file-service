@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Upload source code as artefact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: file-service
           path: .
@@ -24,11 +24,11 @@ jobs:
     needs: get_source
     runs-on: ubuntu-latest
     container: 
-      image: docker://abcdesktopio/oc.user.18.04:dev
+      image: docker://abcdesktopio/oc.user.default:3.1
       options: --user 0
     steps:
       - name: Download source code
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: file-service
 
@@ -37,6 +37,7 @@ jobs:
           rm -rf /composer/node/file-service
           cp -r file-service /composer/node
           cd /composer/node/file-service
+          npm install -g yarn
           yarn install
           nohup yarn start &
           sleep 10
