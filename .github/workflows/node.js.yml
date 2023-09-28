@@ -20,8 +20,39 @@ jobs:
           node-version: '18.x'
       - run: npm install -g yarn
       - run: mkdir -p ~/.wallpapers
-      - run: yarn install
-      - run: DISABLE_REMOTEIP_FILTERING=true yarn test
+
+      - name: start file server
+        uses: JarvusInnovations/background-action@v1
+        with:
+          run: |
+            yarn install
+            DISABLE_REMOTEIP_FILTERING=true yarn start &
+          # your step-level and job-level environment variables are available to your commands as-is
+          # npm install will count towards the wait-for timeout
+          # whenever possible, move unrelated scripts to a different step
+          # to background multiple processes: add & to the end of the command
+
+          wait-on: |
+            http://localhost:29783
+          # IMPORTANT: to use environment variables in wait-on, you must use this form: ${{ env.VAR }}
+          # See wait-on section below for all resource types and prefixes
+
+          tail: true # true = stderr,stdout
+          # This will allow you to monitor the progress live
+
+          log-output-resume: stderr
+          # Eliminates previosuly output stderr log entries from post-run output
+
+          wait-for: 5m
+
+          log-output: stderr,stdout # same as true
+
+          log-output-if: failure
+          # failure = exit-early or timeout
+
+      - name: Tests that require the resources defined above to run
+        run: yarn test
+       
 
       - name: Upload source code as artefact
         uses: actions/upload-artifact@v3
