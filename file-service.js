@@ -356,7 +356,7 @@ router.get('/directory/list',
  */
 router.post('/', [upload.single('file'), middlewareCheckFile],
   asyncHandler(async (req, res) => {
-    console.log( req );
+    // console.log( req );
     const { file } = req;
     const { fullPath = '' } = req.body;
     const { originalname, buffer } = file;
