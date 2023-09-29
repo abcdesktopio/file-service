@@ -7,7 +7,7 @@
 - `delete` file
 - `delete` directory
 
-file-service is used by oc.filer and oc.cupsd images
+file-service is used by [oc.filer](https://https://github.com/abcdesktopio/oc.filer) and [oc.cupsd](https://https://github.com/abcdesktopio/oc.cupsd) images.
 
 
 ## Features
