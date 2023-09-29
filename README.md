@@ -14,7 +14,7 @@ file-service is used by [oc.filer](https://github.com/abcdesktopio/oc.filer) and
 
 ### API 
 
-The API documentation is avalable in file [file-service.md](https://github.com/abcdesktopio/file-service/file-service.md)
+The API documentation is avalable in file [https://github.com/abcdesktopio/file-service/file-service.md](https://github.com/abcdesktopio/file-service/blob/main/file-service.md)
 
 
 ### GET POST DELETE features 
