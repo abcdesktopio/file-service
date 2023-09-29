@@ -7,14 +7,14 @@
 - `delete` file
 - `delete` directory
 
-file-service is used by [oc.filer](https://https://github.com/abcdesktopio/oc.filer) and [oc.cupsd](https://https://github.com/abcdesktopio/oc.cupsd) images.
+file-service is used by [oc.filer](https://github.com/abcdesktopio/oc.filer) and [oc.cupsd](https://github.com/abcdesktopio/oc.cupsd) images.
 
 
 ## Features
 
 ### API 
 
-The API documentation is avalable in file file-service.md 
+The API documentation is avalable in file [file-service.md](https://github.com/abcdesktopio/file-service/file-service.md)
 
 
 ### GET POST DELETE features 
