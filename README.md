@@ -12,7 +12,12 @@ file-service is used by oc.filer and oc.cupsd images
 
 ## Features
 
-### GET PUT DELETE features 
+### API 
+
+The API documentation is avalable in file file-service.md 
+
+
+### GET POST DELETE features 
 
 Each main features can de disable by env vars.
 
@@ -68,11 +73,16 @@ rootdir = process.env.HOME
 yarn install
 ```
 
+This command installs file service modules.
+
 ### to start file-service  
 
 ```
 DISABLE_REMOTEIP_FILTERING=true yarn start 
 ```
+
+This command start a file service and listen to the default tcp port.
+
 
 ### to run test
 
@@ -80,3 +90,14 @@ DISABLE_REMOTEIP_FILTERING=true yarn start
 mkdir -p ~/.wallpapers
 CONTAINER_IP=127.0.0.1 yarn test
 ```
+
+This command run test file one a running file service.
+
+
+### to make docs 
+
+```
+yarn docs
+```
+
+This command create a `file-service.md` file.
