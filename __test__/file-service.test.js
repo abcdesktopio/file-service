@@ -113,7 +113,7 @@ describe('Test file-service', () => {
 
     it('Should get denied because of file provided is not in home dir test 3', () => {
       const expected = { code: 400, data: 'Path Server Error' };
-      const path = `/tmp/access.txt`;
+      const path = '/tmp/access.txt';
       return request
         .get('/filer')
         .query({ file: path })
@@ -122,7 +122,26 @@ describe('Test file-service', () => {
 
     it('Should get denied because of file provided is not in home dir test 4', () => {
       const expected = { code: 400, data: 'Path Server Error' };
-      const path = `/etc/passwd`;
+      const path = '/etc/passwd';
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    it('Should get denied because of file provided is not in home dir test 5', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = '~/../../tmp/access.txt';
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    // use string ../../../../../../../../../../../../ to get root /
+    it('Should get denied because of file provided is not in home dir test 5', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = '~/../../../../../../../../../../../../etc/passwd';
       return request
         .get('/filer')
         .query({ file: path })
@@ -150,6 +169,20 @@ describe('Test file-service', () => {
       .get('/filer/directory/list')
       .query({ directory: '~/.wallpapers' })
       .expect(200));
+
+    it('Should get Path Server Error because ~/../../../../../../../../../../../../ is denied', () => request
+      .get('/filer/directory/list')
+      .query({ directory: '~/../../../../../../../../../../../../' })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
+
+    it('Should list all files in / directory', () => request
+      .get('/filer/directory/list')
+      .query({ directory: '/' })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
 
     it('Should get not found', () => request
       .get('/filer/directory/list')
