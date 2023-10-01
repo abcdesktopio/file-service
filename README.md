@@ -93,7 +93,6 @@ This command start a file service and listen to the default tcp port.
 ### to run test
 
 ```
-mkdir -p ~/.wallpapers
 CONTAINER_IP=127.0.0.1 yarn test
 ```
 
