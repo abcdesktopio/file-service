@@ -291,7 +291,7 @@ router.get('/directory/list',
 
     // Check if the path is correct
     if (!checkSafePath(directory)) {
-      console.log( `request to ${file} is denied path is not safe` );
+      console.log( `request to ${directory} is denied path is not safe` );
       console.log('Error on path:', directory);
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
