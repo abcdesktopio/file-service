@@ -212,7 +212,7 @@ router.get('/',
     }
 
     if (!checkSafePath(file)) {
-      console.log( 'request is denied !checkSafePath' );
+      console.log( `request to ${file} is denied path is not safe` );
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
     }
@@ -291,8 +291,10 @@ router.get('/directory/list',
 
     // Check if the path is correct
     if (!checkSafePath(directory)) {
+      console.log( `request to ${file} is denied path is not safe` );
       console.log('Error on path:', directory);
       res.status(400).send({ code: 400, data: 'Path Server Error' });
+      return;
     }
 
     directory = normalize_tildpath(directory);
@@ -383,6 +385,10 @@ router.post('/', [upload.single('file'), middlewareCheckFile],
       ret.code = 200;
       ret.data = 'ok';
     }
+    else {
+      console.log( `request to ${saveTo} is denied path is not safe` );
+      console.log( 'request is denied path is not safe' );
+    }
 
     console.log(ret);
     res.status(ret.code).send(ret);
@@ -463,9 +469,12 @@ router.delete('/',
       return;
     }
 
-
-    // Check if the path is correct
-    if (checkSafePath(file)) {
+    if (!checkSafePath(file)) {
+      console.log( `request to ${file} is denied path is not safe` );
+      res.status(400).send({ code: 400, data: 'Path Server Error' });
+      return;
+    }
+    else {
       file = normalize_tildpath(file);
       if (await exists(file)) {
         await fs.promises.unlink(file);
@@ -476,6 +485,7 @@ router.delete('/',
         ret.data = 'Not Found';
       }
     }
+
     res.status(ret.code).send(ret);
   }));
 
