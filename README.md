@@ -12,6 +12,45 @@ file-service is used by [oc.filer](https://github.com/abcdesktopio/oc.filer) and
 
 ## Features
 
+### sample
+
+#### create a dummy.txt sample file
+
+```bash
+echo "Yet another test file" > ~/dummy.txt
+```
+
+#### start file-service in background
+
+```bash
+DISABLE_REMOTEIP_FILTERING=true yarn start 2>file-service.error  > file-service.log &
+curl http://localhost:29783/filer?file=~/access.txt
+```
+
+#### query dummy.txt sample file with curl
+
+```bash
+curl http://localhost:29783/filer?file=~/access.txt
+```
+
+you get
+
+```
+Yet another test file
+```
+
+#### query /etc/passwd file with curl
+
+```bash
+curl http://localhost:29783/filer?file=/etc/passwd
+```
+
+you get
+
+```json
+{"code":400,"data":"Path Server Error"}
+```
+
 ### API 
 
 The API documentation is avalable in file [https://github.com/abcdesktopio/file-service/file-service.md](https://github.com/abcdesktopio/file-service/blob/main/file-service.md)
