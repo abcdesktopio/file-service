@@ -24,13 +24,12 @@ echo "Yet another test file" > ~/dummy.txt
 
 ```bash
 DISABLE_REMOTEIP_FILTERING=true yarn start 2>file-service.error  > file-service.log &
-curl http://localhost:29783/filer?file=~/access.txt
 ```
 
 #### query dummy.txt sample file with curl
 
 ```bash
-curl http://localhost:29783/filer?file=~/access.txt
+curl http://localhost:29783/filer?file=~/dummy.txt
 ```
 
 you get
