@@ -193,7 +193,7 @@ describe('Test file-service', () => {
     it('Should get not found because of file provided is not a directory', () => {
       const [file] = fs.readdirSync(`${process.env.HOME}/.wallpapers`);
       const directory = `~/.wallpapers/${file}`;
-      const expected = { code: 403, data: 'Not found' };
+      const expected = { code: 404, data: 'Not found' };
       return request
         .get('/filer/directory/list')
         .query({ directory })
