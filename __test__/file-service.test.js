@@ -18,12 +18,14 @@ const request = supertest(`http://${process.env.CONTAINER_IP}:29783`);
 
 const uploadFinaleName = 'uploaded.data.txt';
 const uploadFinaleNameTwo = 'uploaded.data.2.txt';
-const pathOnHost = `/home/balloon/.wallpapers/${uploadFinaleName}`;
+const pathOnHost = `${process.env.HOME}/.wallpapers/${uploadFinaleName}`;
 describe('Test file-service', () => {
   beforeAll(() => {
-    fs.mkdirSync('/home/balloon/.wallpapers', { recursive: true } );
-    fs.writeFileSync('/tmp/uploaded.txt', 'Yet another test file');
+    fs.mkdirSync( `${process.env.HOME}/.wallpapers`, { recursive: true } );
+    fs.writeFileSync( `${process.env.HOME}/access.txt`, 'Yet another test file' );
+    fs.writeFileSync('/tmp/uploaded.txt',   'Yet another test file');
     fs.writeFileSync('/tmp/uploaded.2.txt', 'Yet another test file');
+    fs.writeFileSync('/tmp/denied.txt',     'Yet another test file');
   });
 
   describe('Test Uploadfile', () => {
@@ -92,10 +94,74 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
+    it('Should get denied because of file provided is not in home diri test 1', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      return request
+        .get('/filer')
+        .query({ file: '/tmp/denied.txt'})
+        .expect(expected);
+    });
+
+    it('Should get denied because of file provided is not in home dir test 2', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = `${process.env.HOME}/../../tmp/access.txt`;
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    it('Should get denied because of file provided is not in home dir test 3', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = '/tmp/access.txt';
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    it('Should get denied because of file provided is not in home dir test 4', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = '/etc/passwd';
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    it('Should get denied because of file provided is not in home dir test 5', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = '~/../../tmp/access.txt';
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    // use string ../../../../../../../../../../../../ to get root /
+    it('Should get denied because of file provided is not in home dir test 5', () => {
+      const expected = { code: 400, data: 'Path Server Error' };
+      const path = '~/../../../../../../../../../../../../etc/passwd';
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(expected);
+    });
+
+    it('Should get access.txt because of file provided is in home dir', () => {
+      const path = `${process.env.HOME}/access.txt`;
+      return request
+        .get('/filer')
+        .query({ file: path })
+        .expect(200);
+    });
+
     it('Should download the uploaded file', () => request
       .get('/filer')
       .query({ file: pathOnHost })
-      .expect(200));
+      .expect(200)
+    );
+
   });
 
   describe('Test list directory', () => {
@@ -104,21 +170,36 @@ describe('Test file-service', () => {
       .query({ directory: '~/.wallpapers' })
       .expect(200));
 
+    it('Should get Path Server Error because ~/../../../../../../../../../../../../ is denied', () => request
+      .get('/filer/directory/list')
+      .query({ directory: '~/../../../../../../../../../../../../' })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
+
+    it('Should list all files in / directory', () => request
+      .get('/filer/directory/list')
+      .query({ directory: '/' })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
+
     it('Should get not found', () => request
       .get('/filer/directory/list')
-      .query({ directory: '/home/balloon/directoryWichDoesnotExist' })
+      .query({ directory: '~/directoryWichDoesnotExist' })
       .expect(404)
       .expect({ code: 404, data: 'Not found' }));
 
-    it('Should get forbiden because of file provided is not a directory', () => {
-      const [file] = fs.readdirSync('/home/balloon/.wallpapers');
+    it('Should get not found because of file provided is not a directory', () => {
+      const [file] = fs.readdirSync('~/.wallpapers');
       const directory = `~/.wallpapers/${file}`;
-      const expected = { code: 403, data: `${directory} is not a directory` };
+      const expected = { code: 404, data: 'Not found' };
       return request
         .get('/filer/directory/list')
         .query({ directory })
         .expect(expected);
     });
+
     it('Should get 422 error because of directory not provided', () => request.get('/filer/directory/list')
       .expect(422)
       .expect({ errors: [{ location: 'query', msg: 'No directory provided', param: 'directory' }] }));
@@ -188,5 +269,6 @@ describe('Test file-service', () => {
   afterAll(() => {
     fs.unlinkSync('/tmp/uploaded.txt');
     fs.unlinkSync('/tmp/uploaded.2.txt');
+    fs.unlinkSync('/tmp/denied.txt');
   });
 });
