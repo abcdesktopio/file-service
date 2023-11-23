@@ -191,7 +191,7 @@ describe('Test file-service', () => {
       .expect({ code: 404, data: 'Not found' }));
 
     it('Should get not found because of file provided is not a directory', () => {
-      const [file] = fs.readdirSync('~/.wallpapers');
+      const [file] = fs.readdirSync(`${process.env.HOME}/.wallpapers`);
       const directory = `~/.wallpapers/${file}`;
       const expected = { code: 404, data: 'Not found' };
       return request
