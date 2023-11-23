@@ -42,7 +42,7 @@ describe('Test file-service', () => {
       const expected = { code: 200, data: 'ok' };
       return request
         .post('/filer')
-        .field('fullPath', '~/.wallpapers')
+        .field('fullPath', '~/.wallpapers/' + uploadFinaleName)
         .attach('file', fs.readFileSync('/tmp/uploaded.txt'), uploadFinaleName)
         .expect(200)
         .expect(expected);
