@@ -309,7 +309,7 @@ router.get('/directory/list',
         res.status(200).send(await getFilesSort(directory));
       } else {
         console.log(directory, 'is not a directory');
-        res.status(404).send({ code: 404, data: `${directory} is not a directory` });
+        res.status(404).send({ code: 404, data: `not a directory` });
       }
     }
   }));
