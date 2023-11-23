@@ -324,14 +324,20 @@ router.post('/', [upload.single('file'), middlewareCheckFile],
     const { file } = req;
     const { fullPath = '' } = req.body;
     const { originalname, buffer } = file;
-    const ret = { code: 403, data: 'Forbiden bad path' };
-
-    let saveTo = `${fullPath || rootdir}/${originalname}`;
+    const ret = { code: 403, data: 'Forbidden bad path' };
+    console.log( 'file=', file );
+    console.log( 'fullPath=', fullPath );
+    console.log( 'originalname=', originalname );
+    let saveTo = ( fullPath == '') ? originalname : fullPath;
+    console.log( 'saveTo=', saveTo );
     saveTo = normalize_tildpath(saveTo);	
+    console.log( 'normalized saveTo=', saveTo );
     if (checkSafePath(saveTo)) {
-      if (fullPath !== '' && !(await dirExists(fullPath))) {
-        console.log(`Create dir${fullPath}`);
-        fsextra.ensureDir(fullPath);
+      const pathObj = path.parse(saveTo);
+
+      if (!(await dirExists(pathObj.dir))) {
+        console.log(`Create dir${pathObj.dir}`);
+        fsextra.ensureDir(pathObj.dir);
       }
 
       console.log(originalname, 'want to be save in', saveTo);
