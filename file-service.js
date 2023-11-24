@@ -383,9 +383,13 @@ router.post('/', [upload.single('file'), middlewareCheckFile],
 
       if (!(await dirExists(pathObj.dir))) {
         console.log(`Create dir${pathObj.dir}`);
-        fsextra.ensureDirSync(pathObj.dir);
+	try {
+        	fsextra.ensureDirSync(pathObj.dir);
+	}
+	catch (e) {
+    	   	console.error(e);
+  	}
       }
-
       console.log(originalname, 'want to be save in', saveTo);
       console.log(`writing file ${saveTo}`);
       await fs.promises.writeFile(saveTo, buffer);
