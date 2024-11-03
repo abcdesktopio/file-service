@@ -5,7 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - 3.3
 
 jobs:
   tests:
@@ -82,15 +84,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch repository oc.cupsd
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.TOKEN_DISPATCH }}
           repository: abcdesktopio/oc.cupsd
           event-type: dispatch-from-file-service
+          client-payload: '{"ref": "${{ github.ref_name }}", "sha": "${{ github.sha }}"}'
           
       - name: Dispatch repository oc.filer
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.TOKEN_DISPATCH }}
           repository: abcdesktopio/oc.filer
           event-type: dispatch-from-file-service
+          client-payload: '{"ref": "${{ github.ref_name }}", "sha": "${{ github.sha }}"}'
