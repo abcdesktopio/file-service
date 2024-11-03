@@ -5,8 +5,10 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ main ]
-
+    branches: 
+      - main
+      - 3.3
+      
 jobs:
   tests:
     runs-on: ubuntu-latest
