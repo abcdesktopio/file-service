@@ -202,7 +202,15 @@ describe('Test file-service', () => {
 
     it('Should get 422 error because of directory not provided', () => request.get('/filer/directory/list')
       .expect(422)
-      .expect({ errors: [{ location: 'query', msg: 'No directory provided', param: 'directory' }] }));
+      .expect({ 
+	 errors: [
+	   { 	type: 'field',
+          	msg: 'No directory provided',
+          	path: 'directory',
+          	location: 'query'
+	   }], 
+      })
+    );
 
     it('Should get 422 error because of directory provided as empty', () => request.get('/filer/directory/list')
       .query({ directory: '' })
