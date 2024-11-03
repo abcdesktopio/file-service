@@ -217,6 +217,7 @@ describe('Test file-service', () => {
       .expect(422)
       .expect({
         errors: [{
+	  type: 'field',
           location: 'query',
           msg: 'directory must not be empty',
           param: 'directory',
@@ -227,7 +228,12 @@ describe('Test file-service', () => {
 
   describe('Test Deletefile', () => {
     it('Should get forbidden because of not provided [file]', () => {
-      const expected = { errors: [{ location: 'body', msg: 'No file provided', param: 'file' }] };
+      const expected = { errors: [{ 
+      	  type: 'field',
+          msg: 'No file provided',
+          path: 'file',
+          location: 'body'
+      }] };
       return request
         .delete('/filer')
         .send({})
@@ -238,7 +244,11 @@ describe('Test file-service', () => {
     it('Should get forbidden because file provided as null', () => {
       const expected = {
         errors: [{
-          value: null, location: 'body', msg: 'No file provided', param: 'file',
+	  type: 'field',
+          value: null,
+          msg: 'No file provided',
+          path: 'file',
+          location: 'body'
         }],
       };
       return request
