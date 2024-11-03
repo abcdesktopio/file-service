@@ -59,8 +59,8 @@ describe('Test file-service', () => {
   });
 
   describe('Test Downloadfile', () => {
-    it('Should get forbidden because of param not provided [file]', () => {
-      const expected = { errors: [{ location: 'query', msg: 'No file provided', param: 'file' }] };
+    it('Should get forbidden because of no file provided', () => {
+      const expected = { errors: [ { type: 'field', msg: 'No file provided', path: 'file', location: 'query' } ] };
       return request
         .get('/filer')
         .query({})
@@ -68,12 +68,8 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
-    it('Should get forbidden because [file] provided as null', () => {
-      const expected = {
-        errors: [{
-          value: '', location: 'query', msg: 'file must not be empty', param: 'file',
-        }],
-      };
+    it('Should get forbidden because file must not be empty', () => {
+      const expected = { errors: [ { type: 'field', msg: 'file must not be empty', path: 'file', location: 'query' } ] };
       return request
         .get('/filer')
         .query({ file: null })
@@ -94,7 +90,7 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
-    it('Should get denied because of file provided is not in home diri test 1', () => {
+    it('Should get denied because of file provided is not in home dir test to /tmp/denied.txt', () => {
       const expected = { code: 400, data: 'Path Server Error' };
       return request
         .get('/filer')
@@ -102,7 +98,7 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
-    it('Should get denied because of file provided is not in home dir test 2', () => {
+    it('Should get denied because of file provided is not in home dir test to ../../tmp/access.txt', () => {
       const expected = { code: 400, data: 'Path Server Error' };
       const path = `${process.env.HOME}/../../tmp/access.txt`;
       return request
@@ -111,7 +107,7 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
-    it('Should get denied because of file provided is not in home dir test 3', () => {
+    it('Should get denied because of file provided is not in home dir test to /tmp/access.txt', () => {
       const expected = { code: 400, data: 'Path Server Error' };
       const path = '/tmp/access.txt';
       return request
@@ -120,7 +116,7 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
-    it('Should get denied because of file provided is not in home dir test 4', () => {
+    it('Should get denied because of file provided is not in home dir test to /etc/passwd', () => {
       const expected = { code: 400, data: 'Path Server Error' };
       const path = '/etc/passwd';
       return request
@@ -129,7 +125,7 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
-    it('Should get denied because of file provided is not in home dir test 5', () => {
+    it('Should get denied because of file provided is not in home dir test to ~/../../tmp/access.txt', () => {
       const expected = { code: 400, data: 'Path Server Error' };
       const path = '~/../../tmp/access.txt';
       return request
@@ -139,7 +135,7 @@ describe('Test file-service', () => {
     });
 
     // use string ../../../../../../../../../../../../ to get root /
-    it('Should get denied because of file provided is not in home dir test 5', () => {
+    it('Should get denied because of file provided is not in home dir test to root with ~/../../../../../../../../../../../../etc/passwd ', () => {
       const expected = { code: 400, data: 'Path Server Error' };
       const path = '~/../../../../../../../../../../../../etc/passwd';
       return request
