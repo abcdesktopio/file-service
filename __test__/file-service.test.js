@@ -206,7 +206,7 @@ describe('Test file-service', () => {
 	 errors: [
 	   { 	type: 'field',
           	msg: 'No directory provided',
-          	path: 'directory',
+          	param: 'directory',
           	location: 'query'
 	   }], 
       })
@@ -220,7 +220,7 @@ describe('Test file-service', () => {
 	  type: 'field',
           location: 'query',
           msg: 'directory must not be empty',
-          param: 'directory',
+          path: 'directory',
           value: '',
         }],
       }));
@@ -261,7 +261,10 @@ describe('Test file-service', () => {
     it('Should get forbidden because file provided as empty', () => {
       const expected = {
         errors: [{
-          value: '', location: 'body', msg: 'file must not be empty', param: 'file',
+          value: '', 
+	  location: 'body', 
+	  msg: 'file must not be empty', 
+	  path: 'file',
         }],
       };
       return request
