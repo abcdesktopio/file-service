@@ -21,8 +21,8 @@
     "jest": "29.7.0",
     "jszip": "^3.7.0",
     "mime-types": "*",
-    "multer": "^1.4.4",
-    "oc.user.libraries": "^1.0.5",
+    "multer": "^1.4.5-lts.1",
+    "oc.user.libraries": "^1.0.5"
   },
   "devDependencies": {
     "supertest": "^7.0.0",
@@ -30,7 +30,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^28.8.3",
-    "swagger-jsdoc": "^6.1.0",
+    "swagger-jsdoc": "^6.2.8",
     "widdershins": "^4.0.1"
   }
 }
