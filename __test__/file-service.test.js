@@ -69,7 +69,7 @@ describe('Test file-service', () => {
     });
 
     it('Should get forbidden because file must not be empty', () => {
-      const expected = { errors: [ { type: 'field', msg: 'file must not be empty', path: 'file', location: 'query' } ] };
+      const expected = { errors: [ { type: 'field', value: '', msg: 'file must not be empty', path: 'file', location: 'query' } ] };
       return request
         .get('/filer')
         .query({ file: null })
@@ -80,7 +80,11 @@ describe('Test file-service', () => {
     it('Should get forbidden because [file] provided as empty', () => {
       const expected = {
         errors: [{
-          value: '', location: 'query', msg: 'file must not be empty', param: 'file',
+          type: 'field',
+          value: '',
+          msg: 'file must not be empty',
+          path: 'file',
+          location: 'query'
         }],
       };
       return request
