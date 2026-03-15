@@ -107,7 +107,7 @@ function checkSafePath(currentPath) {
 async function getNameTimeFile(file, dir) {
   try {
     // care Windows/Linux
-    const path = `${dir}/${file}`; 
+    const path = fs.join(dir, file);
     const s = await fs.stat(path);
     return { name: file, time: s.mtime.getTime() };
   } catch (err) {
