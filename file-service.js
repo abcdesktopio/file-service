@@ -105,8 +105,14 @@ function checkSafePath(currentPath) {
 }
 
 async function getNameTimeFile(file, dir) {
-  const s = await fs.promises.stat(`${dir}/${file}`);
-  return { name: file, time: s.mtime.getTime() };
+  try {
+    // care Windows/Linux
+    const path = `${dir}/${file}`; 
+    const s = await fs.stat(path);
+    return { name: file, time: s.mtime.getTime() };
+  } catch (err) {
+    return { name: file, time: null };
+  }
 }
 
 async function getFilesSort(dir) {
