@@ -5,18 +5,16 @@ name: Node.js CI
 
 on:
   push:
-    branches: 
-      - main
-      - 3.3
-      
+
 jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Get source code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: '3.3'
+          ref: ${{ github.ref_name }}
+          
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -80,21 +78,21 @@ jobs:
 #          nohup yarn start &
 #          sleep 10
 #          CONTAINER_IP=$(hostname -I | awk '{print $1}') yarn test
-
-  dispatch:
-    needs: tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dispatch repository oc.cupsd
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.TOKEN_DISPATCH }}
-          repository: abcdesktopio/oc.cupsd
-          event-type: dispatch-from-file-service
-          
-      - name: Dispatch repository oc.filer
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.TOKEN_DISPATCH }}
-          repository: abcdesktopio/oc.filer
-          event-type: dispatch-from-file-service
+#
+#  dispatch:
+#    needs: tests
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Dispatch repository oc.cupsd
+#      uses: peter-evans/repository-dispatch@v2
+#        with:
+#          token: ${{ secrets.TOKEN_DISPATCH }}
+#          repository: abcdesktopio/oc.cupsd
+#          event-type: dispatch-from-file-service
+#          
+#      - name: Dispatch repository oc.filer
+#        uses: peter-evans/repository-dispatch@v2
+#        with:
+#          token: ${{ secrets.TOKEN_DISPATCH }}
+#          repository: abcdesktopio/oc.filer
+#          event-type: dispatch-from-file-service
