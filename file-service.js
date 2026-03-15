@@ -111,7 +111,7 @@ async function getNameTimeFile(file, dir) {
     const s = await fs.stat(path);
     return { name: file, time: s.mtime.getTime() };
   } catch (err) {
-    return { name: file, time: null };
+    return { name: file, time: 0 };
   }
 }
 
