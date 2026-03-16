@@ -73,7 +73,7 @@ function normalize_tildpath(currentPath) {
     normalizedPath = path.normalize(currentPath);
     const pathObj = path.parse(normalizedPath);
     if (!pathObj.dir.startsWith(rootdir)) {
-	    normalizedPath = rootdir + '/' + normalizedPath;
+	    normalizedPath = path.join( rootdir, normalizedPath);
 	    normalizedPath = path.normalize(normalizedPath);
     }
   } catch (e) {
