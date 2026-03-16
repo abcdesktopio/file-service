@@ -69,7 +69,7 @@ function normalize_tildpath(currentPath) {
   console.log('normalize_directory currentPath=' + currentPath);
   try {
     if (currentPath.charAt(0) == '~')
-          currentPath = rootdir + '/' + currentPath.substring(1);
+          currentPath = path.join( rootdir, currentPath.substring(1) );
     normalizedPath = path.normalize(currentPath);
     const pathObj = path.parse(normalizedPath);
     if (!pathObj.dir.startsWith(rootdir)) {
@@ -89,7 +89,7 @@ function checkSafePath(currentPath) {
   console.log('checkSafePath currentPath=' + currentPath);
   try {
     if (currentPath.charAt(0) == '~')
-	  currentPath = rootdir + '/' + currentPath.substring(1);
+	  currentPath = path.join( rootdir, currentPath.substring(1) );
     const normalizedPath = path.normalize(currentPath);
     console.log('checkSafePath normalizedPath=', normalizedPath);
     const pathObj = path.parse(normalizedPath);
@@ -106,9 +106,8 @@ function checkSafePath(currentPath) {
 
 async function getNameTimeFile(file, dir) {
   try {
-    // care Windows/Linux
-    const path = fs.join(dir, file);
-    const s = await fs.stat(path);
+    const filepath = path.join(dir, file);
+    const s = await fs.stat(filepath);
     return { name: file, time: s.mtime.getTime() };
   } catch (err) {
     return { name: file, time: 0 };
