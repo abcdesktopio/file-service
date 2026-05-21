@@ -12,7 +12,8 @@
 */
 
 const fs = require('fs');
-const fsextra = require('fs-extra')
+const fsextra = require('fs-extra');
+const { spawn } = require('child_process');
 const util = require('util');
 const express = require('express');
 const asyncHandler = require('express-async-handler');
@@ -30,11 +31,28 @@ const {
   middleWareDirectoryQuery,
 } = require('./middlewares');
 
-const upload = multer({ storage: multer.memoryStorage() });
-const exists = util.promisify(fs.exists);
+// Helper function to check if a file or directory exists
+// as fs.exists is deprecated
+async function exists(p) {
+  try { await fs.promises.access(p); return true; }
+  catch { return false; }
+}
 
+// ---------------------------------------------------------------------------
+// Logger — levels : error(0) warn(1) info(2) debug(3)
+// Controlled by LOG_LEVEL (default: 'info' in production, 'debug' if NODE_ENV=development)
+// ---------------------------------------------------------------------------
+const LOG_LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
+const DEFAULT_LEVEL = process.env.NODE_ENV === 'development' ? 'debug' : 'info';
+const CURRENT_LOG_LEVEL = LOG_LEVELS[process.env.LOG_LEVEL] ?? LOG_LEVELS[DEFAULT_LEVEL];
 
-
+const logger = {
+  error: (msg, ...args) => { if (CURRENT_LOG_LEVEL >= 0) console.error(`[ERROR] ${msg}`, ...args); },
+  warn:  (msg, ...args) => { if (CURRENT_LOG_LEVEL >= 1) console.warn( `[WARN]  ${msg}`, ...args); },
+  info:  (msg, ...args) => { if (CURRENT_LOG_LEVEL >= 2) console.log(  `[INFO]  ${msg}`, ...args); },
+  debug: (msg, ...args) => { if (CURRENT_LOG_LEVEL >= 3) console.log(  `[DEBUG] ${msg}`, ...args); },
+};
+// ---------------------------------------------------------------------------
 
 const rootdir = process.env.HOME;
 const PORT = process.env.FILE_SERVICE_TCP_PORT || 29783;
@@ -42,18 +60,88 @@ const ALLOW_TO_SENDFILE = is_allow_var( process.env.SENDFILE) ;
 const ALLOW_TO_ACCEPTFILE = is_allow_var( process.env.ACCEPTFILE );
 const ALLOW_TO_LISTFILE = is_allow_var( process.env.ACCEPTLISTFILE );
 const ALLOW_TO_DELETEFILE = is_allow_var( process.env.ACCEPTDELETEFILE );
+const ALLOW_BINARIES_UPLOAD = process.env.ACCEPT_BINARIES_UPLOAD ? is_allow_var( process.env.ACCEPT_BINARIES_UPLOAD ) : false;
+const ALLOW_COMPRESSED_UPLOAD = process.env.ACCEPT_COMPRESSED_UPLOAD ? is_allow_var( process.env.ACCEPT_COMPRESSED_UPLOAD ) : false;
+const UPLOAD_SIZE_LIMIT = parseInt(process.env.UPLOAD_SIZE_LIMIT) || 1000 * 1024 * 1024;
 
 const DENIED_REQUEST_FILE_RESPONSE = { code: 403, data: 'Forbidden' };
 
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: UPLOAD_SIZE_LIMIT } });
 
-console.log(`Service is listening on port ${PORT}`);
-console.log(`Root dir is ${rootdir}`);
-console.log(`ALLOW_TO_SENDFILE=${ALLOW_TO_SENDFILE}`);
-console.log(`ALLOW_TO_ACCEPTFILE=${ALLOW_TO_ACCEPTFILE}`);
-console.log(`ALLOW_TO_LISTFILE=${ALLOW_TO_LISTFILE}`);
-console.log(`ALLOW_TO_DELETEFILE=${ALLOW_TO_DELETEFILE}`);
+logger.info(`Service is listening on port ${PORT}`);
+logger.debug(`Root dir is ${rootdir}`);
+logger.info(`Current log level is ${CURRENT_LOG_LEVEL}`)
+logger.info(`ALLOW_TO_SENDFILE=${ALLOW_TO_SENDFILE}`);
+logger.info(`ALLOW_TO_ACCEPTFILE=${ALLOW_TO_ACCEPTFILE}`);
+logger.info(`ALLOW_TO_LISTFILE=${ALLOW_TO_LISTFILE}`);
+logger.info(`ALLOW_TO_DELETEFILE=${ALLOW_TO_DELETEFILE}`);
+logger.info(`ALLOW_BINARIES_UPLOAD=${ALLOW_BINARIES_UPLOAD}`);
+logger.info(`ALLOW_COMPRESSED_UPLOAD=${ALLOW_COMPRESSED_UPLOAD}`);
+logger.info(`UPLOAD_SIZE_LIMIT=${UPLOAD_SIZE_LIMIT}`);
 
 
+// MIME types whose execution could be dangerous on a desktop container.
+const BLOCKED_MIME_TYPES = new Set([
+  'application/x-elf',              // Linux ELF binary
+  'application/x-executable',       // generic executable
+  'application/x-sharedlib',        // .so shared library
+  'application/x-object',           // .o compiled object
+  'application/x-msdownload',       // Windows PE/DLL
+  'application/x-dex',              // Android DEX
+  'application/x-mach-binary',      // macOS Mach-O
+  'text/x-shellscript',             // shell script
+]);
+
+// Compressed archive formats — can embed executables or be used for zip bombs.
+const COMPRESSED_MIME_TYPES = new Set([
+  'application/zip',                // .zip
+  'application/x-7z-compressed',   // .7z
+  'application/x-rar-compressed',  // .rar
+  'application/gzip',              // .tar.gz / .tgz
+  'application/x-bzip2',           // .tar.bz2
+  'application/x-xz',             // .tar.xz
+  'application/zstd',              // .tar.zst
+  'application/x-rpm',              // .rpm
+  'application/x-iso9660-image',  // .iso
+]);
+
+/**
+ * Returns the MIME type of a buffer by piping it to the `file` command via stdin.
+ * No temp file, no filename involved — immune to command injection.
+ */
+function getMimeTypeFromBuffer(buf) {
+  return new Promise((resolve, reject) => {
+    // '--mime-type' : print only the MIME type
+    // '-b'          : brief mode, no filename prefix
+    // '-'           : read from stdin
+    const proc = spawn('file', ['--mime-type', '-b', '-']);
+    let output = '';
+    let error = '';
+
+    proc.stdout.on('data', (data) => { output += data.toString(); });
+    proc.stderr.on('data', (data) => { error += data.toString(); });
+    proc.on('error', reject);
+
+    proc.stdin.write(buf);
+    proc.stdin.end();
+
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`file command exited with code ${code}: ${error.trim()}`));
+      } else {
+        resolve(output.trim());
+      }
+    });
+  });
+}
+
+async function isDangerousBuffer(buf) {
+  const mime = await getMimeTypeFromBuffer(buf);
+  logger.info(`POST upload: detected MIME type ${mime}`);
+  if (BLOCKED_MIME_TYPES.has(mime) && !ALLOW_BINARIES_UPLOAD) return mime;
+  if (COMPRESSED_MIME_TYPES.has(mime) && !ALLOW_COMPRESSED_UPLOAD) return mime;
+  return null;
+}
 
 function is_allow_var( env_var, value ) {
   if ( env_var ) {
@@ -66,18 +154,19 @@ function is_allow_var( env_var, value ) {
 
 function normalize_tildpath(currentPath) {
   let normalizedPath=currentPath;
-  console.log('normalize_directory currentPath=' + currentPath);
+  logger.debug('normalize_directory currentPath=' + currentPath);
   try {
     if (currentPath.charAt(0) == '~')
           currentPath = path.join( rootdir, currentPath.substring(1) );
     normalizedPath = path.normalize(currentPath);
     const pathObj = path.parse(normalizedPath);
-    if (!pathObj.dir.startsWith(rootdir)) {
+    const safePrefixCheck = rootdir.endsWith('/') ? rootdir : rootdir + '/';
+    if (!pathObj.dir.startsWith(safePrefixCheck) && pathObj.dir !== rootdir && normalizedPath !== rootdir) {
 	    normalizedPath = path.join( rootdir, normalizedPath);
 	    normalizedPath = path.normalize(normalizedPath);
     }
   } catch (e) {
-        console.error(e);
+        logger.error('normalize_tildpath error', e);
   }
   return normalizedPath;
 }
@@ -86,33 +175,33 @@ function normalize_tildpath(currentPath) {
 
 function checkSafePath(currentPath) {
   let bReturn = false;
-  console.log('checkSafePath currentPath=' + currentPath);
+  logger.debug('checkSafePath currentPath=' + currentPath);
   try {
     if (currentPath.charAt(0) == '~')
 	  currentPath = path.join( rootdir, currentPath.substring(1) );
     const normalizedPath = path.normalize(currentPath);
-    console.log('checkSafePath normalizedPath=', normalizedPath);
+    logger.debug('checkSafePath normalizedPath=' + normalizedPath);
     const pathObj = path.parse(normalizedPath);
-    console.log('checkSafePath pathObj=', pathObj);
-    if (pathObj.dir.startsWith(rootdir) || currentPath === rootdir) {
+    const safePrefixCheck = rootdir.endsWith('/') ? rootdir : rootdir + '/';
+    if (pathObj.dir.startsWith(safePrefixCheck) || pathObj.dir === rootdir || normalizedPath === rootdir) {
       bReturn = true;
     }
   } catch (e) {
-    	console.error(e);
+    	logger.error('checkSafePath error', e);
   }
-  console.log(`checkSafePath return ${bReturn}`);
+  logger.debug(`checkSafePath return ${bReturn}`);
   return bReturn;
 }
 
 async function getNameTimeFile(file, dir) {
   try {
     const filepath = path.join(dir, file);
-    const s = await fs.stat(filepath);
+    const s = await fs.promises.stat(filepath);
     return { name: file, time: s.mtime.getTime() };
   } catch (err) {
     return { name: file, time: 0 };
   }
-}
+} 
 
 async function getFilesSort(dir) {
   const files = await fs.promises.readdir(dir);
@@ -127,7 +216,7 @@ async function dirExists(d) {
     const ls = await fs.promises.lstat(d);
     return ls.isDirectory();
   } catch (e) {
-    console.error(e);
+    logger.error('dirExists error', e);
     return false;
   }
 }
@@ -140,22 +229,29 @@ async function dirExists(d) {
  */
 async function generateZipTree(file, zip) {
   try {
-    const ls = await fs.promises.lstat(file);
-    const parts = file.split('/');
+    const realFile = await fs.promises.realpath(file);
+    const safePrefixCheck = rootdir.endsWith('/') ? rootdir : rootdir + '/';
+    if (!realFile.startsWith(safePrefixCheck) && realFile !== rootdir) {
+      logger.warn('generateZipTree: symlink escape attempt blocked');
+      return;
+    }
+
+    const ls = await fs.promises.lstat(realFile);
+    const parts = realFile.split('/');
     const filename = parts[parts.length - 1];
+
     if (ls.isDirectory()) {
       const folder = zip.folder(filename);
-      const filesDirectory = await fs.promises.readdir(file);
-
+      const filesDirectory = await fs.promises.readdir(realFile);
       await Promise.all(
-        filesDirectory.map((f) => generateZipTree(`${file}/${f}`, folder)),
+        filesDirectory.map((f) => generateZipTree(`${realFile}/${f}`, folder)),
       );
     } else {
-      const buffer = await fs.promises.readFile(file, { encoding: 'binary' });
+      const buffer = await fs.promises.readFile(realFile, { encoding: 'binary' });
       zip.file(filename, buffer, { encoding: 'binary' });
     }
   } catch (e) {
-    console.error(e);
+    logger.error('generateZipTree error', e);
   }
 }
 
@@ -166,7 +262,7 @@ app.use(helmet());
 
 app.use(express.json());
 app.use((req, _, next) => {
-  console.log('method:', req.method, 'on', req.path);
+  logger.info(`${req.method} ${req.path}`);
   next();
 });
 
@@ -207,36 +303,42 @@ router.get('/',
   middleWareFileQuery,
   asyncHandler(async (req, res) => {
     let { file } = req.query;
-    console.log('file=', file);
+    logger.debug('GET file requested');
 
 
     if (!ALLOW_TO_SENDFILE) {
-      console.log( 'request is denied by configuration' );
+      logger.warn('GET file: request denied by configuration');
       res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
       return;
     }
 
     if (!checkSafePath(file)) {
-      console.log( `request to ${file} is denied path is not safe` );
+      logger.warn('GET file: path is not safe (blocked)');
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
     }
 
 
     file = normalize_tildpath(file);
-    if (!(await exists(file))) {
-      res.status(404).send({ code: 404, data: 'Not found' });
-      return;
+
+    let ls;
+    try {
+      ls = await fs.promises.lstat(file);
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        res.status(404).send({ code: 404, data: 'Not found' });
+        return;
+      }
+      throw e; 
     }
 
-    const ls = await fs.promises.lstat(file);
     if (!ls.isDirectory()) {
       pipeline(
         fs.createReadStream(file),
         res,
         (err) => {
           if (err) {
-            console.error(err);
+            logger.error('GET file: stream error', err);
           }
           res.end();
         },
@@ -247,9 +349,10 @@ router.get('/',
     const zip = new JSZip();
     await generateZipTree(file, zip);
 
+    const safeName = path.basename(file).replace(/[^\w\-. ]/g, '_');
     res.header(
       'Content-Disposition',
-      `attachment; filename="${file}.zip"`,
+      `attachment; filename="${safeName}.zip"`,
     );
     res.setHeader('Content-Type', 'application/zip');
 
@@ -264,7 +367,7 @@ router.get('/',
       res,
       (err) => {
         if (err) {
-          console.error(err);
+          logger.error('GET directory zip: stream error', err);
         }
         res.end();
       },
@@ -289,31 +392,30 @@ router.get('/directory/list',
     let { directory } = req.query;
 
     if (!ALLOW_TO_LISTFILE) {
-      console.log( 'request is denied by configuration' );
+      logger.warn('LIST directory: request denied by configuration');
       res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
       return;
     }
 
     // Check if the path is correct
     if (!checkSafePath(directory)) {
-      console.log( `request to ${directory} is denied path is not safe` );
-      console.log('Error on path:', directory);
+      logger.warn('LIST directory: path is not safe (blocked)');
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
     }
 
     directory = normalize_tildpath(directory);
-    console.log('normalized directory:', directory);
+    logger.debug('LIST directory: normalized path resolved');
     if (!(await exists(directory))) {
-      console.log('Can not find directory:', directory);
+      logger.info('LIST directory: directory not found');
       res.status(404).send({ code: 404, data: 'Not found' });
     } else {
       const ls = await fs.promises.lstat(directory);
       if (ls.isDirectory()) {
-        console.log('listing directory:', directory);
+        logger.debug('LIST directory: listing');
         res.status(200).send(await getFilesSort(directory));
       } else {
-        console.log(directory, 'is not a directory');
+        logger.info('LIST directory: path is not a directory');
         res.status(404).send({ code: 404, data: `not a directory` });
       }
     }
@@ -363,51 +465,54 @@ router.get('/directory/list',
  */
 router.post('/', [upload.single('file'), middlewareCheckFile],
   asyncHandler(async (req, res) => {
-    // console.log( req );
     const { file } = req;
     const { fullPath = '' } = req.body;
     const { originalname, buffer } = file;
     const ret = { code: 403, data: 'Forbidden bad path' };
-    console.log( 'file=', file );
-    console.log( 'fullPath=', fullPath );
-    console.log( 'originalname=', originalname );
-    let saveTo = ( fullPath == '') ? originalname : fullPath;
+    logger.debug('POST upload: file received');
+
+    // Check actual file type
+    const dangerousType = await isDangerousBuffer(buffer);
+    if (dangerousType) {
+      logger.warn(`POST upload: blocked dangerous file content (${dangerousType})`);
+      res.status(403).send({ code: 403, data: 'Forbidden: dangerous file content' });
+      return;
+    }
+
+    const safeOriginalName = path.basename(originalname);
+    let saveTo = (fullPath === '') ? safeOriginalName : fullPath;
 
     if (!ALLOW_TO_ACCEPTFILE) {
-      console.log( 'request is denied by configuration' );
+      logger.warn('POST upload: request denied by configuration');
       res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
       return;
     }
 
-    console.log( 'saveTo=', saveTo );
-    saveTo = normalize_tildpath(saveTo);	
-    console.log( 'normalized saveTo=', saveTo );
+    saveTo = normalize_tildpath(saveTo);
+    logger.debug('POST upload: path normalized');
 
     if (checkSafePath(saveTo)) {
       const pathObj = path.parse(saveTo);
 
       if (!(await dirExists(pathObj.dir))) {
-        console.log(`Create dir${pathObj.dir}`);
-	try {
-        	fsextra.ensureDirSync(pathObj.dir);
-	}
-	catch (e) {
-    	   	console.error(e);
-  	}
+        logger.info('POST upload: creating missing directory');
+        try {
+                fsextra.ensureDirSync(pathObj.dir);
+        }
+        catch (e) {
+                logger.error('POST upload: failed to create directory', e);
+          }
       }
-      console.log(originalname, 'want to be save in', saveTo);
-      console.log(`writing file ${saveTo}`);
+      logger.debug('POST upload: writing file');
       await fs.promises.writeFile(saveTo, buffer);
-      console.log('Write done');
+      logger.info('POST upload: write done');
       ret.code = 200;
       ret.data = 'ok';
     }
     else {
-      console.log( `request to ${saveTo} is denied path is not safe` );
-      console.log( 'request is denied path is not safe' );
+      logger.warn('POST upload: path is not safe (blocked)');
     }
 
-    console.log(ret);
     res.status(ret.code).send(ret);
   }));
 
@@ -477,31 +582,34 @@ router.delete('/',
   asyncHandler(async (req, res) => {
     let { file } = req.body;
     const ret = { code: 400, data: 'Path server error' };
-    console.log('file', file);
-    console.log(`accessing file: ${file}`);
+    logger.debug('DELETE file: request received');
 
     if (!ALLOW_TO_DELETEFILE) {
-      console.log( 'request is denied by configuration' ); 
+      logger.warn('DELETE file: request denied by configuration');
       res.status(400).send( DENIED_REQUEST_FILE_RESPONSE );
       return;
     }
 
     if (!checkSafePath(file)) {
-      console.log( `request to ${file} is denied path is not safe` );
+      logger.warn('DELETE file: path is not safe (blocked)');
       res.status(400).send({ code: 400, data: 'Path Server Error' });
       return;
     }
-    else {
-      file = normalize_tildpath(file);
-      if (await exists(file)) {
-        await fs.promises.unlink(file);
-        ret.code = 200;
-        ret.data = 'ok';
-      } else {
+    
+    file = normalize_tildpath(file);
+    try {
+      await fs.promises.unlink(file);
+      ret.code = 200;
+      ret.data = 'ok';
+    } catch (e) {
+      if (e.code === 'ENOENT') {
         ret.code = 404;
         ret.data = 'Not Found';
+      } else {
+        throw e;
       }
     }
+    
 
     res.status(ret.code).send(ret);
   }));
@@ -512,22 +620,21 @@ router.all('*', (req, res) => {
     data: `Can not ${req.method} ${req.path}`,
   };
 
-  console.error(ret);
+  logger.warn(`Route not found: ${req.method} ${req.path}`);
   res.send(ret);
 });
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _) => {
-  console.error(req.path);
-  console.error(err.stack);
-  console.error(err.field);
+  logger.error(`Unhandled error on ${req.method} ${req.path}`);
+  logger.error(err.stack);
   res.status(500).send({ code: 500, data: 'Internal server error' });
 });
 
 app.use(/\/(printer)?filer/, router);
 
 process.on('uncaughtException', (err) => {
-  console.error(err.stack);
+  logger.error('Uncaught exception', err.stack);
 });
 
 listenDaemonOnContainerIpAddr(app, PORT, 'File-Service listening for requests');

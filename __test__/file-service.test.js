@@ -56,6 +56,25 @@ describe('Test file-service', () => {
         .expect(200)
         .expect(expected);
     });
+
+    it('Should get 403 when uploading a shell script (dangerous content)', () => {
+      const shellScript = Buffer.from('#!/bin/bash\necho hello\n');
+      return request
+        .post('/filer')
+        .attach('file', shellScript, 'malicious.sh')
+        .expect(403)
+        .expect({ code: 403, data: 'Forbidden: dangerous file content' });
+    });
+
+    it('Should get 403 when uploading a zip archive (compressed content)', () => {
+      // Minimal valid empty zip: PK end-of-central-directory record (22 bytes)
+      const emptyZip = Buffer.from('504b05060000000000000000000000000000000000000000', 'hex');
+      return request
+        .post('/filer')
+        .attach('file', emptyZip, 'archive.zip')
+        .expect(403)
+        .expect({ code: 403, data: 'Forbidden: dangerous file content' });
+    });
   });
 
   describe('Test Downloadfile', () => {
@@ -160,6 +179,22 @@ describe('Test file-service', () => {
       .get('/filer')
       .query({ file: pathOnHost })
       .expect(200)
+    );
+
+    it('Should get 404 when downloading a file that does not exist', () => {
+      const nonExistent = `${process.env.HOME}/file_that_does_not_exist_xyz_123.txt`;
+      return request
+        .get('/filer')
+        .query({ file: nonExistent })
+        .expect(404)
+        .expect({ code: 404, data: 'Not found' });
+    });
+
+    it('Should download a directory as a zip file', () => request
+      .get('/filer')
+      .query({ file: `${process.env.HOME}/.wallpapers` })
+      .expect(200)
+      .expect('Content-Type', /zip/)
     );
 
   });
@@ -275,6 +310,27 @@ describe('Test file-service', () => {
         .expect(expected);
     });
 
+    it('Should get 400 when file to delete is outside home directory', () => request
+      .delete('/filer')
+      .send({ file: '/tmp/denied.txt' })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
+
+    it('Should get 400 when file to delete uses path traversal', () => request
+      .delete('/filer')
+      .send({ file: `${process.env.HOME}/../../tmp/access.txt` })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
+
+    it('Should get 400 when file to delete uses tilde path traversal to /etc/passwd', () => request
+      .delete('/filer')
+      .send({ file: '~/../../../../../../../../../../../../etc/passwd' })
+      .expect(400)
+      .expect({ code: 400, data: 'Path Server Error' })
+    );
+
     it('Should delete the uploaded file', () => request
       .delete('/filer')
       .send({ file: pathOnHost })
@@ -286,11 +342,20 @@ describe('Test file-service', () => {
       .send({ file: pathOnHost })
       .expect(404)
       .expect({ code: 404, data: 'Not Found' }));
+
+    it('Should delete the second uploaded file from home directory', () => request
+      .delete('/filer')
+      .send({ file: `${process.env.HOME}/${uploadFinaleNameTwo}` })
+      .expect(200)
+      .expect({ code: 200, data: 'ok' })
+    );
   });
 
   afterAll(() => {
     fs.unlinkSync('/tmp/uploaded.txt');
     fs.unlinkSync('/tmp/uploaded.2.txt');
     fs.unlinkSync('/tmp/denied.txt');
+    const accessFile = `${process.env.HOME}/access.txt`;
+    if (fs.existsSync(accessFile)) fs.unlinkSync(accessFile);
   });
 });

@@ -27,7 +27,7 @@ jobs:
         uses: JarvusInnovations/background-action@v1
         with:
           run: |
-            DISABLE_REMOTEIP_FILTERING=true yarn start   
+            DISABLE_REMOTEIP_FILTERING=true NODE_ENV=development ACCEPT_BINARIES_UPLOAD=false ACCEPT_COMPRESSED_UPLOAD=false yarn start   
           wait-on: |
              tcp:localhost:29783
           # IMPORTANT: to use environment variables in wait-on, you must use this form: ${{ env.VAR }}
