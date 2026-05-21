@@ -614,7 +614,7 @@ router.delete('/',
     res.status(ret.code).send(ret);
   }));
 
-router.all('*', (req, res) => {
+router.all('/{*path}', (req, res) => {
   const ret = {
     code: 404,
     data: `Can not ${req.method} ${req.path}`,
@@ -631,7 +631,7 @@ app.use((err, req, res, _) => {
   res.status(500).send({ code: 500, data: 'Internal server error' });
 });
 
-app.use(/\/(printer)?filer/, router);
+app.use(['/filer', '/printerfiler'], router);
 
 process.on('uncaughtException', (err) => {
   logger.error('Uncaught exception', err.stack);
