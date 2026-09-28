@@ -71,6 +71,9 @@ Each main features can de disable by env vars.
 | ACCEPTFILE       | Allow http put                           |
 | ACCEPTLISTFILE   | Allow http list file (use json format)   |
 | ACCEPTDELETEFILE | Allow http delete                        |
+| ACCEPT_BINARIES_UPLOAD   | Allow upload binary files        |
+| ACCEPT_COMPRESSED_UPLOAD | Allow upload compresses files    |
+| UPLOAD_SIZE_LIMIT | upload size limit |
 
 To disable a feature, set env var to `false`
 
