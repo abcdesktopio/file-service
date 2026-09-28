@@ -73,7 +73,7 @@ Each main features can de disable by env vars.
 | ACCEPTDELETEFILE | Allow http delete                        |
 | ACCEPT_BINARIES_UPLOAD   | Allow upload binary files        |
 | ACCEPT_COMPRESSED_UPLOAD | Allow upload compresses files    |
-| UPLOAD_SIZE_LIMIT | upload size limit |
+| UPLOAD_SIZE_LIMIT | upload size limit in bytes, default value is `1000 * 1024 * 1024 = 1048576000` |
 
 To disable a feature, set env var to `false`
 
